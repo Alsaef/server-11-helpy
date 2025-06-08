@@ -176,7 +176,7 @@ async function run() {
             res.status(201).json({ message: "Event joined successfully", result });
         });
 
-        
+
 
         app.get("/api/joined-events", async (req, res) => {
             const email = req.query.email;
@@ -185,7 +185,7 @@ async function run() {
             }
 
             try {
-                const events = await joinedEvents.find({ email }).toArray();
+                const events = await joinedEvents.find({ email }).sort({ eventDate: 1 }).toArray();
                 res.send(events);
             } catch (error) {
                 console.error("Error fetching joined events:", error);
