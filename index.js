@@ -176,6 +176,7 @@ async function run() {
             res.status(201).json({ message: "Event joined successfully", result });
         });
 
+        
 
         app.get("/api/joined-events", async (req, res) => {
             const email = req.query.email;
