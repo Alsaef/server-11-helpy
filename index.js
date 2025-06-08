@@ -36,6 +36,7 @@ async function run() {
 
         const database = client.db("SocialWorkDB");
         const eventsCollection = database.collection("events");
+        const joinedEvents = database.collection("joinedEvents");
 
 
 
@@ -152,6 +153,46 @@ async function run() {
                 res.status(500).send({ message: "Failed to delete event", error: err.message });
             }
         });
+
+
+
+        app.post('/api/join-event', async (req, res) => {
+            const { title, description, eventType, thumbnail, location, eventDate, email } = req.body;
+
+            // validate
+            if (!title || !email) return res.status(400).json({ error: "Missing required fields" });
+
+            const newJoin = {
+                title,
+                description,
+                eventType,
+                thumbnail,
+                location,
+                eventDate: new Date(eventDate),
+                email
+            };
+
+            const result = await joinedEvents.insertOne(newJoin);
+            res.status(201).json({ message: "Event joined successfully", result });
+        });
+
+
+        app.get("/api/joined-events", async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                return res.status(400).json({ message: "Email is required" });
+            }
+
+            try {
+                const events = await joinedEvents.find({ email }).toArray();
+                res.send(events);
+            } catch (error) {
+                console.error("Error fetching joined events:", error);
+                res.status(500).send({ message: "Server error" });
+            }
+        });
+
+
 
     } finally {
         // Ensures that the client will close when you finish/error
