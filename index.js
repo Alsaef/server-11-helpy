@@ -1,5 +1,6 @@
 const express = require('express')
-var cors = require('cors')
+const cors = require('cors')
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 3000
@@ -8,7 +9,20 @@ app.use(express.json())
 app.use(cors())
 
 
-
+const verifyJWT = (req, res, next) => {
+  const authorize = req.headers.authorization;
+  if (!authorize) {
+    return res.status(401).send({ error: true, message: 'unauthorize access' })
+  }
+  const token = authorize.split(' ')[1]
+  jwt.verify(token, process.env.JWT_Secure, (error, decoded) => {
+    if (error) {
+      return res.status(401).send({ error: true, message: "unauthorize access" })
+    }
+    req.decoded = decoded
+    next()
+  })
+}
 
 
 
@@ -38,6 +52,15 @@ async function run() {
         const eventsCollection = database.collection("events");
         const joinedEvents = database.collection("joinedEvents");
 
+
+
+        app.post('/api/jwt',async(req,res)=>{
+           const user=req.body
+           const token=jwt.sign({email:user.email},process.env.JWT_Secure,{
+            expiresIn: '7d'
+           })
+            res.status(200).send(token)
+        })
 
 
         app.post("/api/events", async (req, res) => {
@@ -94,7 +117,7 @@ async function run() {
             }
         });
 
-        app.get("/api/events/by-email", async (req, res) => {
+        app.get("/api/events/by-email",verifyJWT, async (req, res) => {
             try {
                 const email = req.query.email;
                 if (!email) return res.status(400).send({ message: "Email is required" });
@@ -178,7 +201,7 @@ async function run() {
 
 
 
-        app.get("/api/joined-events", async (req, res) => {
+        app.get("/api/joined-events",verifyJWT, async (req, res) => {
             const email = req.query.email;
             if (!email) {
                 return res.status(400).json({ message: "Email is required" });
