@@ -63,7 +63,7 @@ async function run() {
         })
 
 
-        app.post("/api/events", async (req, res) => {
+        app.post("/api/events",verifyJWT, async (req, res) => {
             try {
                 const {
                     title, description, eventType, thumbnail,
@@ -141,7 +141,7 @@ async function run() {
         });
 
 
-        app.patch("/api/event/:id", async (req, res) => {
+        app.patch("/api/event/:id",verifyJWT, async (req, res) => {
             try {
                 const { id } = req.params;
                 const updateData = req.body;
@@ -162,7 +162,7 @@ async function run() {
             }
         });
 
-        app.delete("/api/event/:id", async (req, res) => {
+        app.delete("/api/event/:id",verifyJWT, async (req, res) => {
             try {
                 const { id } = req.params;
 
@@ -179,7 +179,7 @@ async function run() {
 
 
 
-        app.post('/api/join-event', async (req, res) => {
+        app.post('/api/join-event',verifyJWT, async (req, res) => {
             const { title, description, eventType, thumbnail, location, eventDate, email } = req.body;
 
             // validate
