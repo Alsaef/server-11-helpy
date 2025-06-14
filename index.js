@@ -10,18 +10,18 @@ app.use(cors())
 
 
 const verifyJWT = (req, res, next) => {
-  const authorize = req.headers.authorization;
-  if (!authorize) {
-    return res.status(401).send({ error: true, message: 'unauthorize access' })
-  }
-  const token = authorize.split(' ')[1]
-  jwt.verify(token, process.env.JWT_Secure, (error, decoded) => {
-    if (error) {
-      return res.status(401).send({ error: true, message: "unauthorize access" })
+    const authorize = req.headers.authorization;
+    if (!authorize) {
+        return res.status(401).send({ error: true, message: 'unauthorize access' })
     }
-    req.decoded = decoded
-    next()
-  })
+    const token = authorize.split(' ')[1]
+    jwt.verify(token, process.env.JWT_Secure, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ error: true, message: "unauthorize access" })
+        }
+        req.decoded = decoded
+        next()
+    })
 }
 
 
@@ -54,16 +54,16 @@ async function run() {
 
 
 
-        app.post('/api/jwt',async(req,res)=>{
-           const user=req.body
-           const token=jwt.sign({email:user.email},process.env.JWT_Secure,{
-            expiresIn: '7d'
-           })
+        app.post('/api/jwt', async (req, res) => {
+            const user = req.body
+            const token = jwt.sign({ email: user.email }, process.env.JWT_Secure, {
+                expiresIn: '7d'
+            })
             res.status(200).send(token)
         })
 
 
-        app.post("/api/events",verifyJWT, async (req, res) => {
+        app.post("/api/events", verifyJWT, async (req, res) => {
             try {
                 const {
                     title, description, eventType, thumbnail,
@@ -95,16 +95,21 @@ async function run() {
         });
 
 
-
         app.get("/api/events", async (req, res) => {
             try {
                 const currentDate = new Date();
-                const { type, search } = req.query;
+                const { eventType, search } = req.query;
 
                 const query = { eventDate: { $gte: currentDate } };
 
-                if (type) query.eventType = type;
-                if (search) query.title = { $regex: search, $options: "i" };
+                if (eventType && eventType !== "All") {
+                    query.eventType = { $regex: new RegExp(eventType, "i") };
+                }
+
+                
+                if (search && search.trim() !== "") {
+                    query.title = { $regex: search, $options: "i" };
+                }
 
                 const events = await eventsCollection
                     .find(query)
@@ -117,7 +122,8 @@ async function run() {
             }
         });
 
-        app.get("/api/events/by-email",verifyJWT, async (req, res) => {
+
+        app.get("/api/events/by-email", verifyJWT, async (req, res) => {
             try {
                 const email = req.query.email;
                 if (!email) return res.status(400).send({ message: "Email is required" });
@@ -141,7 +147,7 @@ async function run() {
         });
 
 
-        app.patch("/api/event/:id",verifyJWT, async (req, res) => {
+        app.patch("/api/event/:id", verifyJWT, async (req, res) => {
             try {
                 const { id } = req.params;
                 const updateData = req.body;
@@ -162,7 +168,7 @@ async function run() {
             }
         });
 
-        app.delete("/api/event/:id",verifyJWT, async (req, res) => {
+        app.delete("/api/event/:id", verifyJWT, async (req, res) => {
             try {
                 const { id } = req.params;
 
@@ -179,7 +185,7 @@ async function run() {
 
 
 
-        app.post('/api/join-event',verifyJWT, async (req, res) => {
+        app.post('/api/join-event', verifyJWT, async (req, res) => {
             const { title, description, eventType, thumbnail, location, eventDate, email } = req.body;
 
             // validate
@@ -201,7 +207,7 @@ async function run() {
 
 
 
-        app.get("/api/joined-events",verifyJWT, async (req, res) => {
+        app.get("/api/joined-events", verifyJWT, async (req, res) => {
             const email = req.query.email;
             if (!email) {
                 return res.status(400).json({ message: "Email is required" });
